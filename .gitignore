@@ -1,0 +1,6 @@
+dist/
+node_modules/
+*.db
+*.lock
+*-lock.*
+.DS_Store

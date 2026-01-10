@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
+  "include": ["lib"],
+  "compilerOptions": {
+    "lib": ["es2022"],
+    "baseUrl": ".",
+    "rootDir": "lib",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationDir": "dist",
+    "emitDeclarationOnly": false,
+    "strict": true,
+    "paths": {
+      "@gamely/sinuca-3d": ["./index.ts"],
+    },
+    "types": [
+      "@typescript-to-lua/language-extensions"
+    ]
+  },
+  "tstl": {
+    "buildMode": "library",
+    "luaTarget": "universal",
+    "luaLibImport": "inline",
+    "noImplicitGlobalVariables": true,
+    "noImplicitSelf": true,
+    "noHeader": true,
+     "luaPlugins": [
+      { "name": "@gamely/tstl-number" },
+    ]
+  }
+}

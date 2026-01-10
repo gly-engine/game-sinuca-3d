@@ -1,0 +1,21 @@
+{
+  "name": "@gamely/sinuca-3d",
+  "version": "0.0.1",
+  "author": "RodrigoDornelles",
+  "types": "index.d.ts",
+  "type": "module",
+  "main": "game.lua",
+  "funding": "https://github.com/sponsors/RodrigoDornelles",
+  "repository": "https://github.com/gly-engine/game-sinuca-3d",
+  "bugs": "https://github.com/gly-engine/game-sinuca-3d/issues",
+  "scripts": {
+    "build": "tstl"
+  },
+  "devDependencies": {
+    "@gamely/gly-cli": "^0.3.8",
+    "@gamely/gly-types": "^0.2.4",
+    "@gamely/tstl-number": "^0.0.3",
+    "@typescript-to-lua/language-extensions": "^1.19.0",
+    "typescript-to-lua": "^1.33.2"
+  }
+}
