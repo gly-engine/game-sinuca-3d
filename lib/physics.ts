@@ -1,4 +1,4 @@
-import type { SBall, SGameFixed, SGameGenerator, SHole, SWorld } from '@gamely/sinuca-3d'
+import type { SBall, SGameFixed, SGameGenerator, SHole, SWorld, SPhisicsInterface, SItemAdder} from '@gamely/sinuca-3d'
 
 function length(x: number, y: number): number {
   return Math.sqrt(x * x + y * y);
@@ -98,17 +98,56 @@ function solveWallCollisions(balls: SBall[], w: number, h: number, restitution: 
   }
 }
 
-export class SPhysicsLite {
+const isBall = (v: any): v is SBall => v.r && v.vx
+const isHole = (v: any): v is SHole => v.r && !v.vx
+const createHole = (x: number, y: number, r: number): SHole => ({x, y, r, active: true})
+const createBall = (x: number, y: number, r: number): SBall => ({x, y, r, vx: 0, vy: 0, active: true})
+
+function gameUnpack(game: SGameFixed) {
+  let index = 1;
+  return (() => {
+    if (index <= game.length) {
+      const i = index++;
+      return $multi(game[i][0], game[i][1]);
+    }
+  }) as unknown as SGameGenerator
+}
+
+function pshysicsAdd(generator: SGameFixed | SGameGenerator, world: SWorld, holes: SHole[], balls: SBall[]) {
+  const loader = typeof (generator) === 'object'? gameUnpack(generator): generator
+  for (const [obj, type] of loader) {
+    if (type == 'ball') balls.push(obj);
+    else if (type == 'hole') holes.push(obj);
+    else if (isBall(obj)) balls.push(obj);
+    else if (isHole(obj)) holes.push(obj);
+    else if (type == 'world') {
+      world.width = obj.width;
+      world.height = obj.height;
+    }
+  }
+}
+
+export class SPhysicsLite implements SPhisicsInterface {
   private friction = 120;
   private iterations = 2;
   private restitution = 0.98;
-  private holes: SHole[];
-  private balls: SBall[];
+  private holes: SHole[] = [];
+  private balls: SBall[] = [];
   private world: SWorld = {width: 0, height: 0};
 
-  constructor (generator: SGameFixed | SGameGenerator) {
-    this.holes = [];
-    this.balls = [];
+  constructor (width: number, height: number) {
+    this.world = {width, height};
+  }
+
+  public add(...args:[SItemAdder] | [('ball' | 'hole'), number, number, number]) {
+    const item = args[0]
+    const isObj = typeof item === 'object'
+    if (item == 'hole') this.holes.push(createHole(args[1], args[2], args[3]));
+    else if (item == 'ball') this.balls.push(createBall(args[1], args[2], args[3]));
+    else if (isObj && isBall(item)) pshysicsAdd([[item, 'ball']], this.world, this.holes, this.balls)
+    else if (isObj && isHole(item)) pshysicsAdd([[item, 'hole']], this.world, this.holes, this.balls)
+    else pshysicsAdd(item, this.world, this.holes, this.balls);
+    return this
   }
 
   public step(dt: number) {
@@ -120,7 +159,12 @@ export class SPhysicsLite {
   }
 
   public iterator(f: Function) {
-    
+    for (const id of $range(0, this.balls.length - 1)) {
+      f(this.balls[id], 'ball', id);
+    }
+    for (const id of $range(0, this.holes.length - 1)) {
+      f(this.holes[id], 'hole', id);
+    }
   }
 
   public applyImpulse(ballId: number, ix: number, iy: number) {

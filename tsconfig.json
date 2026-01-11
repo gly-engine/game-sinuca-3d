@@ -13,6 +13,7 @@
     "strict": true,
     "paths": {
       "@gamely/sinuca-3d": ["./index.ts"],
+      "@gamely/sinuca-3d/2d": ["./lib/2d.ts"],
     },
     "types": [
       "@typescript-to-lua/language-extensions"

@@ -4,10 +4,11 @@ local sinucaPhysics = require('dist/physics')
 local sinucaLayouts = require('dist/layouts')
 
 local render = sinuca2D.newTranslator2D(sinucaLayouts.SConfig.getWorldSize())
-local engine = sinucaPhysics.newSPhysicsLite(sinucaLayouts.S8PoolGame())
+local engine = sinucaPhysics.newSPhysicsLite(sinucaLayouts.SConfig.getWorldSize())
+    :add(sinucaLayouts.S8PoolGame())
 
 function love.load()
-    render:setViewPort(0, 0, love.window.getMode())
+    render:setViewPortCentered(0, 0, love.window.getMode())
 end
 
 function love.update(dt)
@@ -15,10 +16,8 @@ function love.update(dt)
 end
 
 function love.draw()
-    local width, height = love.window.getMode()
-
     love.graphics.setColor(0.1, 0.4, 0.1)
-    love.graphics.rectangle("fill", 0, 0, width, height)
+    love.graphics.rectangle("fill", render:getViewPort())
 
     engine:iterator(function(obj, type, id)
         if not obj.r then return end
@@ -52,10 +51,9 @@ end
 function love.mousereleased(x, y, button)
     if button == 1 and aiming then
         aiming = false
-
-        local cue = balls[1]
-        local dx = cue.x - x
-        local dy = cue.y - y
-        physics:applyImpulse(0, dx * 3, dy * 3)
+        local cx, cy = sinucaUtils.getCueXY2D(engine, render)
+        local dx = cx - x
+        local dy = cy - y
+        engine:applyImpulse(0, dx * 200, dy * 200)
     end
 end

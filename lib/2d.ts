@@ -13,6 +13,10 @@ export class Translator2D {
         this.viewport_h = height;
     }
 
+    public getViewPort() {
+        return $multi(this.viewport_x, this.viewport_y, this.viewport_w, this.viewport_h);
+    }
+
     public setViewPort(x: number, y: number, width: number, height: number) {
         this.viewport_x = x;
         this.viewport_y = y;
@@ -20,12 +24,19 @@ export class Translator2D {
         this.viewport_h = height;
     }
 
+    public setViewPortCentered(x: number, y: number, width: number, height: number) {
+        const scale = width / this.width;
+        const vpH = Math.round(this.height * scale);
+        const vpY = (height - vpH) / 2;
+        this.setViewPort(x, vpY, width, vpH);
+    }
+
     public getX(x: number) {
-        return ((x - this.viewport_x) * this.viewport_w / this.width);
+        return this.viewport_x + (x * this.viewport_w / this.width);
     }
 
     public getY(y: number) {
-        return ((y - this.viewport_y) * this.viewport_y / this.height);
+        return this.viewport_y + (y * this.viewport_h / this.height);
     }
 
     public getW(w: number) {
@@ -39,12 +50,12 @@ export class Translator2D {
     public getR(r: number) {
         const sx = this.viewport_w / this.width;
         const sy = this.viewport_h / this.height;
-        return r * ((sx < sy)? sx: sy);
+        return r * ((sx < sy) ? sx : sy);
     }
 }
 
 export function newTranslator2D(
-  ...args: ConstructorParameters<typeof Translator2D>
+    ...args: ConstructorParameters<typeof Translator2D>
 ): Translator2D {
-  return new Translator2D(...args)
+    return new Translator2D(...args)
 }
