@@ -1,4 +1,5 @@
-local physicsLite = require('dist/physics/lite')
+local physicsEngine = require('dist/physics')
+local sinucaLayouts = require('dist/layouts')
 local BALL_RADIUS = 10
 local WIDTH, HEIGHT = 800, 400
 
@@ -17,26 +18,13 @@ end
 function love.load()
     love.window.setMode(WIDTH, HEIGHT)
 
-    physics = physicsLite.newSPhysicsLite()
+    physics = physicsEngine.newSPhysicsLite()
 
     physics.world.width  = WIDTH
     physics.world.height = HEIGHT
 
-    table.insert(balls, newBall(200, HEIGHT / 2))
-
-    local startX = 500
-    local startY = HEIGHT / 2
-    local offset = BALL_RADIUS * 2 + 2
-
-    for i = 0, 2 do
-        for j = 0, i do
-            table.insert(balls,
-                newBall(
-                    startX + i * offset,
-                    startY - i * BALL_RADIUS + j * offset
-                )
-            )
-        end
+    for ball in sinucaLayouts.SLayout8Pool(WIDTH, HEIGHT) do
+        table.insert(balls, ball)
     end
 
     physics.world.balls = balls
