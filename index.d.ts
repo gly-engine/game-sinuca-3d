@@ -16,8 +16,19 @@ export type SHole = {
 export type SWorld = {
   width: number;
   height: number;
-  balls: SBall[];
 }
+
+export type SGameGenerator = LuaIterable<(
+  | LuaMultiReturn<[SBall, 'ball']> 
+  | LuaMultiReturn<[SHole, 'hole']>
+  | LuaMultiReturn<[SWorld, 'world']>
+)>
+
+export type SGameFixed = Array<(
+  | [SBall, 'ball']
+  | [SHole, 'hole']
+  | [SWorld, 'world']
+)>
 
 declare const node: {}
 export default node

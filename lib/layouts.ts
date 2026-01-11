@@ -1,6 +1,10 @@
 import type { SBall, SHole } from "@gamely/sinuca-3d";
 
-export type SIteratorPairType<T> = 
+let ball_size = 10;
+let world_width = 0;
+let world_height = 0;
+
+type SIteratorPairType<T> = 
   T extends SBall ? LuaMultiReturn<[T, 'ball']> :
   T extends SHole ? LuaMultiReturn<[T, 'hole']> :
   never;
@@ -22,7 +26,7 @@ function layoutJoin<T>(skip_t: boolean, ...generators: Array<LuaIterable<T>>) {
 }
 
 export function SGeneratorRack(x: number, y: number, grid: number[], rotate = false) {
-  const spacing = 20;
+  const spacing = ball_size * 2;
   let row = 0;
   let col = 0;
 
@@ -53,7 +57,7 @@ export function SGeneratorRack(x: number, y: number, grid: number[], rotate = fa
       y: y + cy * spacing,
       vx: 0,
       vy: 0,
-      r: 10
+      r: ball_size
     };
 
     col++;
@@ -96,8 +100,7 @@ export function SCrossRack(x: number, y: number, max = 10) {
 }
 
 export function SSquareRack(x: number, y: number, max = 20, join = false) {
-  /** @todo move */
-  const spacing = 20;
+  const spacing = ball_size * 2;
   let remaining = max < 0? -max: max;
   const sqrt = Math.sqrt(remaining);
   if (max < 0) {
@@ -130,12 +133,26 @@ export function SDiamoundRack(x: number, y: number) {
   return SGeneratorRack(x, y, [1, 2, 3, 2, 1])
 }
 
-export function S8PoolRack(width: number, height: number, max?: number) {
-  const w4 = width / 4, h2 = height/2;
+export function S8PoolRack(max?: number) {
+  const w4 = world_width / 4, h2 = world_height/2;
   return SCueWithRack(w4, h2, STriangleRack(w4 * 3, h2, max))
 }
 
-export function S9PoolRack(width: number, height: number): LuaIterable<SBall> {
-  const w4 = width / 4, h2 = height/2;
+export function S9PoolRack(): LuaIterable<SBall> {
+  const w4 = world_width / 4, h2 = world_height/2;
   return SCueWithRack(w4, h2, SDiamoundRack(w4 * 3, h2))
+}
+
+export function S8PoolGame() {
+  return S8PoolRack();
+}
+
+export const SConfig = {
+  getBallSize: () => ball_size,
+  getWorldSize: () => $multi(world_width, world_height),
+  setBallSize: (r: number) => { ball_size = r},
+  setWorldSize: (w: number, h: number) => {
+    world_width = w;
+    world_height = h;
+  }
 }

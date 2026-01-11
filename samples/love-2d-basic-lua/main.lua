@@ -1,57 +1,45 @@
-local physicsEngine = require('dist/physics')
+local sinuca2D = require('dist/2d')
+local sinucaUtils = require('dist/utils')
+local sinucaPhysics = require('dist/physics')
 local sinucaLayouts = require('dist/layouts')
-local BALL_RADIUS = 10
-local WIDTH, HEIGHT = 800, 400
 
-local balls = {}
-local aiming = false
-local physics
-
-local function newBall(x, y)
-    return {
-        x = x, y = y,
-        vx = 0, vy = 0,
-        r = BALL_RADIUS
-    }
-end
+local render = sinuca2D.newTranslator2D(sinucaLayouts.SConfig.getWorldSize())
+local engine = sinucaPhysics.newSPhysicsLite(sinucaLayouts.S8PoolGame())
 
 function love.load()
-    love.window.setMode(WIDTH, HEIGHT)
-
-    physics = physicsEngine.newSPhysicsLite()
-
-    physics.world.width  = WIDTH
-    physics.world.height = HEIGHT
-
-    for ball, t in sinucaLayouts.S8PoolRack(WIDTH, HEIGHT) do
-        table.insert(balls, ball)
-    end
-
-    physics.world.balls = balls
+    render:setViewPort(0, 0, love.window.getMode())
 end
 
 function love.update(dt)
-    physics:step(dt)
+    engine:step(dt)
 end
 
 function love.draw()
-    love.graphics.setColor(0.1, 0.4, 0.1)
-    love.graphics.rectangle("fill", 0, 0, WIDTH, HEIGHT)
+    local width, height = love.window.getMode()
 
-    for i, b in ipairs(balls) do
-        if i == 1 then
+    love.graphics.setColor(0.1, 0.4, 0.1)
+    love.graphics.rectangle("fill", 0, 0, width, height)
+
+    engine:iterator(function(obj, type, id)
+        if not obj.r then return end
+        
+        local x, y, r = render:getX(obj.x), render:getY(obj.y), render:getR(obj.r)
+        
+        if type == 'hole' then
+            love.graphics.setColor(0, 0, 0)
+        elseif id == 0 then
             love.graphics.setColor(1, 1, 1)
         else
             love.graphics.setColor(1, 0, 0)
         end
-        love.graphics.circle("fill", b.x, b.y, b.r)
-    end
+        love.graphics.circle("fill", x, y, r)
+    end);
 
     if aiming then
+        local cx, cy = sinucaUtils.getCueXY2D(engine, render)
         local mx, my = love.mouse.getPosition()
-        local cue = balls[1]
         love.graphics.setColor(1, 1, 1)
-        love.graphics.line(cue.x, cue.y, mx, my)
+        love.graphics.line(cx, cy, mx, my)
     end
 end
 

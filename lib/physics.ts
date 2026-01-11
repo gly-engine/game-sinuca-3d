@@ -1,4 +1,4 @@
-import type { SBall, SWorld } from '@gamely/sinuca-3d'
+import type { SBall, SGameFixed, SGameGenerator, SHole, SWorld } from '@gamely/sinuca-3d'
 
 function length(x: number, y: number): number {
   return Math.sqrt(x * x + y * y);
@@ -100,24 +100,31 @@ function solveWallCollisions(balls: SBall[], w: number, h: number, restitution: 
 
 export class SPhysicsLite {
   private friction = 120;
-  private restitution = 0.98;
   private iterations = 2;
-  private world: SWorld = {
-    width: 800,
-    height: 400,
-    balls: []
-  };
+  private restitution = 0.98;
+  private holes: SHole[];
+  private balls: SBall[];
+  private world: SWorld = {width: 0, height: 0};
+
+  constructor (generator: SGameFixed | SGameGenerator) {
+    this.holes = [];
+    this.balls = [];
+  }
 
   public step(dt: number) {
-    integrate(this.world.balls, this.friction, dt);
+    integrate(this.balls, this.friction, dt);
     for (let i = 0; i < this.iterations; i++) {
-      solveBallCollisions(this.world.balls);
-      solveWallCollisions(this.world.balls, this.world.width, this.world.height, this.restitution);
+      solveBallCollisions(this.balls);
+      solveWallCollisions(this.balls, this.world.width, this.world.height, this.restitution);
     }
   }
 
+  public iterator(f: Function) {
+    
+  }
+
   public applyImpulse(ballId: number, ix: number, iy: number) {
-    const b = this.world.balls[ballId];
+    const b = this.balls[ballId];
     if (!b) return;
     b.vx += ix;
     b.vy += iy;
