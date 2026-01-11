@@ -23,7 +23,7 @@ function love.load()
     physics.world.width  = WIDTH
     physics.world.height = HEIGHT
 
-    for ball in sinucaLayouts.SLayout8Pool(WIDTH, HEIGHT) do
+    for ball, t in sinucaLayouts.S8PoolRack(WIDTH, HEIGHT) do
         table.insert(balls, ball)
     end
 

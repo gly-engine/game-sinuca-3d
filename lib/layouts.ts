@@ -1,4 +1,25 @@
-import type { SBall } from "@gamely/sinuca-3d";
+import type { SBall, SHole } from "@gamely/sinuca-3d";
+
+export type SIteratorPairType<T> = 
+  T extends SBall ? LuaMultiReturn<[T, 'ball']> :
+  T extends SHole ? LuaMultiReturn<[T, 'hole']> :
+  never;
+
+function layoutJoin<T>(skip_t: boolean, ...generators: Array<LuaIterable<T>>) {
+  let index = 0;
+  return (() => {
+    do {
+      const ret = generators[index]() as Record<string, unknown>
+      if (ret !== undefined) {
+        if (skip_t) return ret;
+        if (ret.vx !== undefined) return $multi(ret, 'ball')
+        if (ret.r !== undefined) return $multi(ret, 'hole')
+      }
+    }
+    while(++index < generators.length);
+    return undefined
+  }) as unknown as LuaIterable<T>
+}
 
 export function SGeneratorRack(x: number, y: number, grid: number[], rotate = false) {
   const spacing = 20;
@@ -27,6 +48,7 @@ export function SGeneratorRack(x: number, y: number, grid: number[], rotate = fa
     }
 
     const ball: SBall = {
+      active: true,
       x: x + cx * spacing,
       y: y + cy * spacing,
       vx: 0,
@@ -39,16 +61,10 @@ export function SGeneratorRack(x: number, y: number, grid: number[], rotate = fa
   }) as unknown as LuaIterable<SBall>;
 }
 
-export function SJoinAllRacks(...generators: Array<LuaIterable<SBall>>) {
-  let index = 0;
-  return (() => {
-    do {
-      const ball = generators[index]()
-      if (ball !== undefined) return ball;
-    }
-    while(++index < generators.length);
-    return undefined
-  }) as unknown as LuaIterable<SBall>
+export function SLayoutJoin<T extends LuaIterable<any>[]>(
+  ...generators: T
+): LuaIterable<SIteratorPairType<ReturnType<T[number]>>> {
+  return layoutJoin(false, ...generators)
 }
 
 export function STriangleRack(x: number, y: number, max = 15) {
@@ -73,7 +89,7 @@ export function SLineUpRack(x: number, y: number, max = 5, join = false) {
 }
 
 export function SCrossRack(x: number, y: number, max = 10) {
-  return SJoinAllRacks(
+  return layoutJoin(true,
     SLineUpRack(x, y, max/2),
     SLineUpRack(x, y, -max/2)
   );
@@ -98,7 +114,7 @@ export function SSquareRack(x: number, y: number, max = 20, join = false) {
   const half = offset * ((gridSize - 1) / 2);
   const lineLength = gridSize;
 
-  return SJoinAllRacks(
+  return layoutJoin(true,
     SLineUpRack(x, y - half * spacing, lineLength, join),
     SLineUpRack(x, y + half * spacing, lineLength, join),
     SLineUpRack(x - half * spacing, y, - (lineLength - 2), join),
@@ -107,19 +123,19 @@ export function SSquareRack(x: number, y: number, max = 20, join = false) {
 }
 
 export function SCueWithRack(x: number, y: number, generator: LuaIterable<SBall>) {
-  return SJoinAllRacks(SGeneratorRack(x, y, [1]), generator)
+  return layoutJoin(true, SGeneratorRack(x, y, [1]), generator)
 }
 
 export function SDiamoundRack(x: number, y: number) {
   return SGeneratorRack(x, y, [1, 2, 3, 2, 1])
 }
 
-export function SLayout8Pool(width: number, height: number, max?: number) {
+export function S8PoolRack(width: number, height: number, max?: number) {
   const w4 = width / 4, h2 = height/2;
   return SCueWithRack(w4, h2, STriangleRack(w4 * 3, h2, max))
 }
 
-export function SLayout9Pool(width: number, height: number) {
+export function S9PoolRack(width: number, height: number): LuaIterable<SBall> {
   const w4 = width / 4, h2 = height/2;
   return SCueWithRack(w4, h2, SDiamoundRack(w4 * 3, h2))
 }
