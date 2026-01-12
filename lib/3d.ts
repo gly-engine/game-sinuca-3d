@@ -24,6 +24,8 @@ export class TranslatorIsometric3D {
         this.worldHeight = height;
         this.viewport_w = width;
         this.viewport_h = height;
+
+        // mesa no plano X–Y, Z é altura
         this.pivotX = width / 2;
         this.pivotY = height / 2;
         this.pivotZ = 0;
@@ -61,7 +63,14 @@ export class TranslatorIsometric3D {
         this.depthField = d;
     }
 
-    public setRotate(rx: number, ry: number, rz: number) {
+    public setQuatRotate(w: number, x: number, y: number, z: number) {
+        this.rotQuatW = w;
+        this.rotQuatX = x;
+        this.rotQuatY = y;
+        this.rotQuatZ = z;
+    }
+
+    public setEulerRotate(rx: number, ry: number, rz: number) {
         const cx = Math.cos(rx * 0.5), sx = Math.sin(rx * 0.5);
         const cy = Math.cos(ry * 0.5), sy = Math.sin(ry * 0.5);
         const cz = Math.cos(rz * 0.5), sz = Math.sin(rz * 0.5);
@@ -72,11 +81,18 @@ export class TranslatorIsometric3D {
         this.rotQuatZ = cx * cy * sz - sx * sy * cz;
     }
 
-    public setQuatRotate(w: number, x: number, y: number, z: number) {
-        this.rotQuatW = w;
-        this.rotQuatX = x;
-        this.rotQuatY = y;
-        this.rotQuatZ = z;
+    public setIsometricRotation(yaw: number, pitch: number) {
+        const hy = yaw * 0.5;
+        const hp = pitch * 0.5;
+
+        const cy = Math.cos(hy), sy = Math.sin(hy);
+        const cp = Math.cos(hp), sp = Math.sin(hp);
+
+        // q = qYaw(Z) * qPitch(X)
+        this.rotQuatW = cy * cp;
+        this.rotQuatX = sp * cy;
+        this.rotQuatY = sp * sy;
+        this.rotQuatZ = sy * cp;
     }
 
     public getQuatRotate() {
