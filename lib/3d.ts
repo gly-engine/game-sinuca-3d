@@ -11,12 +11,13 @@ export class TranslatorIsometric3D {
     private pivotY: number;
     private pivotZ: number;
 
-    private rotX = 0;
-    private rotY = 0;
-    private rotZ = 0;
+    private rotQuatW = 1;
+    private rotQuatX = 0;
+    private rotQuatY = 0;
+    private rotQuatZ = 0;
 
     private scale = 1;
-    private fov = 0;
+    private depthField = 0;
 
     constructor(width: number, height: number) {
         this.worldWidth = width;
@@ -30,7 +31,7 @@ export class TranslatorIsometric3D {
 
     public setPivot(x: number, y: number, z: number) {
         this.pivotX = x;
-        this.pivotY = y; 
+        this.pivotY = y;
         this.pivotZ = z;
     }
 
@@ -52,18 +53,48 @@ export class TranslatorIsometric3D {
         this.setViewPort(x, vpY, width, vpH);
     }
 
-    public setRotateWorld(rx: number, ry: number, rz: number) {
-        this.rotX = rx;
-        this.rotY = ry;
-        this.rotZ = rz;
-    }
-
     public setScale(s: number) {
         this.scale = s;
     }
 
-    public setFov(fov: number) {
-        this.fov = fov;
+    public setDepthField(d: number) {
+        this.depthField = d;
+    }
+
+    public setRotate(rx: number, ry: number, rz: number) {
+        const cx = Math.cos(rx * 0.5), sx = Math.sin(rx * 0.5);
+        const cy = Math.cos(ry * 0.5), sy = Math.sin(ry * 0.5);
+        const cz = Math.cos(rz * 0.5), sz = Math.sin(rz * 0.5);
+
+        this.rotQuatW = cx * cy * cz + sx * sy * sz;
+        this.rotQuatX = sx * cy * cz + cx * sy * sz;
+        this.rotQuatY = cx * sy * cz - sx * cy * sz;
+        this.rotQuatZ = cx * cy * sz - sx * sy * cz;
+    }
+
+    public setQuatRotate(w: number, x: number, y: number, z: number) {
+        this.rotQuatW = w;
+        this.rotQuatX = x;
+        this.rotQuatY = y;
+        this.rotQuatZ = z;
+    }
+
+    public getQuatRotate() {
+        return $multi(this.rotQuatW, this.rotQuatX, this.rotQuatY, this.rotQuatZ);
+    }
+
+    private rotateVecByQuat(x: number, y: number, z: number) {
+        const qw = this.rotQuatW, qx = this.rotQuatX, qy = this.rotQuatY, qz = this.rotQuatZ;
+
+        const tx = 2 * (qy * z - qz * y);
+        const ty = 2 * (qz * x - qx * z);
+        const tz = 2 * (qx * y - qy * x);
+
+        return $multi(
+            x + qw * tx + (qy * tz - qz * ty),
+            y + qw * ty + (qz * tx - qx * tz),
+            z + qw * tz + (qx * ty - qy * tx)
+        );
     }
 
     public getXY(x: number, y: number, z: number) {
@@ -71,25 +102,14 @@ export class TranslatorIsometric3D {
         y -= this.pivotY;
         z -= this.pivotZ;
 
-        const cosX = Math.cos(this.rotX), sinX = Math.sin(this.rotX);
-        const cosY = Math.cos(this.rotY), sinY = Math.sin(this.rotY);
-        const cosZ = Math.cos(this.rotZ), sinZ = Math.sin(this.rotZ);
+        const [rx, ry, rz] = this.rotateVecByQuat(x, y, z);
 
-        let y1 = y * cosX - z * sinX;
-        let z1 = y * sinX + z * cosX;
+        let projX = rx;
+        let projY = ry;
+        let depth = rz;
 
-        let x2 = x * cosY + z1 * sinY;
-        let z2 = -x * sinY + z1 * cosY;
-
-        let x3 = x2 * cosZ - y1 * sinZ;
-        let y3 = x2 * sinZ + y1 * cosZ;
-
-        let projX = x3;
-        let projY = y3;
-        let depth = z2;
-
-        if (this.fov > 0) {
-            const depthFactor = this.fov / (this.fov + depth);
+        if (this.depthField > 0) {
+            const depthFactor = this.depthField / (this.depthField + depth);
             projX *= depthFactor;
             projY *= depthFactor;
         }
@@ -104,19 +124,19 @@ export class TranslatorIsometric3D {
     }
 
     public getQuadXY(x: number, y: number, w: number, h: number, z = 0) {
-        const [x1, y1] = this.getXY(x, y, z)
-        const [x2, y2] = this.getXY(w, y, z)
-        const [x3, y3] = this.getXY(w, h, z)
-        const [x4, y4] = this.getXY(x, h, z)
-        return $multi(x1, y1, x2, y2, x3, y3, x4, y4)
+        const [x1, y1] = this.getXY(x, y, z);
+        const [x2, y2] = this.getXY(w, y, z);
+        const [x3, y3] = this.getXY(w, h, z);
+        const [x4, y4] = this.getXY(x, h, z);
+        return $multi(x1, y1, x2, y2, x3, y3, x4, y4);
     }
 
     public getAxisXY(x: number, y: number, z: number, size: number) {
-        const [ox, oy] = this.getXY(x, y, z)
-        const [xx, xy] = this.getXY(x + size, y, z)
-        const [yx, yy] = this.getXY(x, y + size, z)
-        const [zx, zy] = this.getXY(x, y, z + size)
-        return $multi(ox, oy, xx, xy, yx, yy, zx, zy)
+        const [ox, oy] = this.getXY(x, y, z);
+        const [xx, xy] = this.getXY(x + size, y, z);
+        const [yx, yy] = this.getXY(x, y + size, z);
+        const [zx, zy] = this.getXY(x, y, z + size);
+        return $multi(xx, xy, yx, yy, zx, zy, ox, oy);
     }
 
     public getW(w: number) {

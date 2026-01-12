@@ -25,8 +25,8 @@ local rotY = 0.0
 function love.load()
     render:setViewPortCentered(0, 0, love.graphics.getDimensions())
     render:setScale(0.6)
-    render:setFov(0)
-    render:setRotateWorld(0, 0, 0)
+    render:setDepthField(0)
+    render:setRotate(0, 0, 0)
 end
 
 function love.update(dt)
@@ -55,10 +55,9 @@ function love.mousemoved(x, y, dx, dy)
     if mouse.rdown then
         rotY = rotY + dx * 0.01
         rotX = rotX + dy * 0.01
-        render:setRotateWorld(rotX, rotY, 0)
+        render:setRotate(rotX, rotY, 0)
     end
 end
-
 
 function love.draw()
     love.graphics.setColor(0.1, 0.4, 0.1)
@@ -87,11 +86,12 @@ function love.draw()
         love.graphics.line(mouse.lx, mouse.ly, mx, my)
     end
 
-    local ox, oy, xx, xy, yx, yy, zx, zy = render:getAxisXY(worldW/2, worldH/2, 0, 500)
+    local xx1, xy1, yx1, yy1, zx1, zy1 = render:getAxisXY(worldW/2, worldH/2, 0, 500)
+    local xx2, xy2, yx2, yy2, zx2, zy2 = render:getAxisXY(worldW/2, worldH/2, 0, -500)
     love.graphics.setColor(1,0,0)
-    love.graphics.line(ox, oy, xx, xy)
+    love.graphics.line(xx1, xy1, xx2, xy2)
     love.graphics.setColor(0,1,0)
-    love.graphics.line(ox, oy, yx, yy)
+    love.graphics.line(yx1, yy1,  yx2, yy2)
     love.graphics.setColor(0,0,1)
-    love.graphics.line(ox, oy, zx, zy)
+    love.graphics.line(zx1, zy1, zx2, zy2)
 end

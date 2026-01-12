@@ -32,23 +32,23 @@ local angle = 0
 
 function love.load()
     render:setViewPortCentered(0, 0, love.graphics.getDimensions())
-    render:setFov(fovArray[fovIndex])
+    render:setDepthField(fovArray[fovIndex])
     render:setScale(scale)
     render:setPivot(0, 0, 0)
 end
 
 function love.update(dt)
     angle = angle + dt
-    render:setRotateWorld(angle, angle * 0.5, angle * 0.2)
+    render:setRotate(angle, angle * 0.5, angle * 0.2)
 end
 
 function love.keypressed(key)
     if key == "right" then
         fovIndex = math.min(fovIndex + 1, #fovArray)
-        render:setFov(fovArray[fovIndex])
+        render:setDepthField(fovArray[fovIndex])
     elseif key == "left" then
         fovIndex = math.max(fovIndex - 1, 1)
-        render:setFov(fovArray[fovIndex])
+        render:setDepthField(fovArray[fovIndex])
     elseif key == "up" then
         scale = scale + 0.10
         render:setScale(scale)
