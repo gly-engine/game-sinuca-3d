@@ -1,4 +1,4 @@
-import type { SBall, SGameFixed, SGameGenerator, SHole, SWorld, SPhisicsInterface, SItemAdder} from '@gamely/sinuca-3d'
+import type { SBall, SGameFixed, SGameGenerator, SHole, SWorld, SPhisicsInterface, SItemAdder, SListenTopic } from '@gamely/sinuca-3d'
 
 function length(x: number, y: number): number {
   return Math.sqrt(x * x + y * y);
@@ -10,9 +10,11 @@ function normalize(x: number, y: number): [number, number] {
   return [x / len, y / len];
 }
 
-function integrate(balls: SBall[], friction: number, dt: number): void {
+function integrate(balls: SBall[], friction: number, dt: number) {
+  let ab = 0, mb = 0;
   for (const b of balls) {
-    //if (!b.active) continue;
+    if (!b.active) continue;
+    ab++;
 
     b.x += b.vx * dt;
     b.y += b.vy * dt;
@@ -21,6 +23,7 @@ function integrate(balls: SBall[], friction: number, dt: number): void {
     if (speed > 0) {
       const decel = friction * dt;
       const newSpeed = Math.max(0, speed - decel);
+      mb++;
 
       if (newSpeed === 0) {
         b.vx = 0;
@@ -32,16 +35,18 @@ function integrate(balls: SBall[], friction: number, dt: number): void {
       }
     }
   }
+
+  return $multi(ab, mb);
 }
 
-function solveBallCollisions(balls: SBall[]) {
+function solveBallCollisions(balls: SBall[], listerners: Array<Function>) {
   for (let i = 0; i < balls.length; i++) {
     const a = balls[i];
-    //if (!a.active) continue;
+    if (!a.active) continue;
 
     for (let j = i + 1; j < balls.length; j++) {
       const b = balls[j];
-      //if (!b.active) continue;
+      if (!b.active) continue;
 
       const dx = b.x - a.x;
       const dy = b.y - a.y;
@@ -57,6 +62,9 @@ function solveBallCollisions(balls: SBall[]) {
       const vb = b.vx * nx + b.vy * ny;
 
       if (va <= vb) continue;
+      for (let funcId = 0; funcId < listerners.length; funcId++) {
+        listerners[funcId](balls[i], i, balls[j], j);  
+      }
 
       const p = va - vb;
 
@@ -76,24 +84,36 @@ function solveBallCollisions(balls: SBall[]) {
   }
 }
 
-function solveWallCollisions(balls: SBall[], w: number, h: number, restitution: number) {
-  for (const b of balls) {
-    //if (!b.active) continue;
+function solveWallCollisions(balls: SBall[], w: number, h: number, restitution: number, listerners: Array<Function>) {
+  for (let i = 0; i < balls.length; i++) {
+    const b = balls[i];
+    let cx = 0, cy = 0;
+    if (!b.active) continue;
 
     if (b.x < b.r) {
+      cx = -1;
       b.x = b.r;
       b.vx = -b.vx * restitution;
     } else if (b.x > w - b.r) {
+      cx = 1;
       b.x = w - b.r;
       b.vx = -b.vx * restitution;
     }
 
     if (b.y < b.r) {
+      cy = -1;
       b.y = b.r;
       b.vy = -b.vy * restitution;
     } else if (b.y > h - b.r) {
+      cy = 1;
       b.y = h - b.r;
       b.vy = -b.vy * restitution;
+    }
+
+    if (cx != 0 || cy != 0) {
+      for (let funcId = 0; funcId < listerners.length; funcId++) {
+        listerners[funcId](balls[i], i);  
+      }
     }
   }
 }
@@ -128,12 +148,19 @@ function pshysicsAdd(generator: SGameFixed | SGameGenerator, world: SWorld, hole
 }
 
 export class SPhysicsLite implements SPhisicsInterface {
-  private friction = 120;
+  private friction = 3800;
   private iterations = 2;
   private restitution = 0.98;
+  private countActiveBalls = 0;
+  private countMovingBalls = 0;
   private holes: SHole[] = [];
   private balls: SBall[] = [];
   private world: SWorld = {width: 0, height: 0};
+  private listerners = {
+    'ball-colide-ball': [] as Array<Function>,
+    'ball-colide-hole': [] as Array<Function>,
+    'ball-colide-world': [] as Array<Function>
+  }
 
   constructor (width: number, height: number) {
     this.world = {width, height};
@@ -150,11 +177,22 @@ export class SPhysicsLite implements SPhisicsInterface {
     return this
   }
 
+  public listen(topic: SListenTopic, callback: Function) {
+    const func_arr = this.listerners[topic]
+    if (!func_arr) return this;
+    if (func_arr.find((f) => f === callback)) return this;
+    func_arr.push(callback);
+    return this;
+  }
+
   public step(dt: number) {
-    integrate(this.balls, this.friction, dt);
+    const [ab, mb] = integrate(this.balls, this.friction, dt);
+    this.countActiveBalls = ab;
+    this.countMovingBalls = mb;
+
     for (let i = 0; i < this.iterations; i++) {
-      solveBallCollisions(this.balls);
-      solveWallCollisions(this.balls, this.world.width, this.world.height, this.restitution);
+      solveBallCollisions(this.balls, this.listerners['ball-colide-ball']);
+      solveWallCollisions(this.balls, this.world.width, this.world.height, this.restitution, this.listerners['ball-colide-world']);
     }
   }
 

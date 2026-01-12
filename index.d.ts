@@ -20,7 +20,7 @@ export type SWorld = {
 }
 
 export type SGameGenerator = LuaIterable<(
-  | LuaMultiReturn<[SBall, 'ball']> 
+  | LuaMultiReturn<[SBall, 'ball']>
   | LuaMultiReturn<[SHole, 'hole']>
   | LuaMultiReturn<[SWorld, 'world']>
 )>
@@ -31,12 +31,15 @@ export type SGameFixed = Array<(
   | [SWorld, 'world']
 )>
 
+export type SListenTopic = 'ball-colide-hole' | 'ball-colide-ball' | 'ball-colide-world'
+
 export type SItemAdder = SGameFixed | SGameGenerator | SBall | SHole
 
 export interface SPhisicsInterface {
   add(item: SItemAdder): SPhisicsInterface;
   add(item: 'ball', x: number, y: number, r: number): SPhisicsInterface;
   add(item: 'hole', x: number, y: number, r: number): SPhisicsInterface;
+  listen(topic: SListenTopic, f: Function): SPhisicsInterface;
   step(dt: number): void;
   iterator(f: (ball: SBall, index: number) => void): void;
   applyImpulse(ballId: number, ix: number, iy: number): void;

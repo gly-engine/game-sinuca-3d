@@ -6,6 +6,7 @@ local sinucaLayouts = require('dist/layouts')
 local render = sinuca2D.newTranslator2D(sinucaLayouts.SConfig.getWorldSize())
 local engine = sinucaPhysics.newSPhysicsLite(sinucaLayouts.SConfig.getWorldSize())
     :add(sinucaLayouts.S8PoolGame())
+    :listen('ball-colide-hole', function(ball, bid) ball.active = false end)
 
 function love.load()
     render:setViewPortCentered(0, 0, love.window.getMode())
@@ -52,8 +53,7 @@ function love.mousereleased(x, y, button)
     if button == 1 and aiming then
         aiming = false
         local cx, cy = sinucaUtils.getCueXY2D(engine, render)
-        local dx = cx - x
-        local dy = cy - y
-        engine:applyImpulse(0, dx * 200, dy * 200)
+        local dx, dy = cx - x, cy - y
+        engine:applyImpulse(0, dx * 84, dy * 84)
     end
 end
