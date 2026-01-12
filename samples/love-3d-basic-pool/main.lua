@@ -87,7 +87,7 @@ function love.draw()
         love.graphics.line(mouse.lx, mouse.ly, mx, my)
     end
 
-    local ox, oy, xx, xy, yx, yy, zx, zy = render:getAxisXY(0, 0, 0, 500)
+    local ox, oy, xx, xy, yx, yy, zx, zy = render:getAxisXY(worldW/2, worldH/2, 0, 500)
     love.graphics.setColor(1,0,0)
     love.graphics.line(ox, oy, xx, xy)
     love.graphics.setColor(0,1,0)

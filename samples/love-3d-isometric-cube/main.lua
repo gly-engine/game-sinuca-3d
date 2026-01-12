@@ -34,6 +34,7 @@ function love.load()
     render:setViewPortCentered(0, 0, love.graphics.getDimensions())
     render:setFov(fovArray[fovIndex])
     render:setScale(scale)
+    render:setPivot(0, 0, 0)
 end
 
 function love.update(dt)

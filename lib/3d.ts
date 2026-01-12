@@ -7,6 +7,10 @@ export class TranslatorIsometric3D {
     private worldWidth: number;
     private worldHeight: number;
 
+    private pivotX: number;
+    private pivotY: number;
+    private pivotZ: number;
+
     private rotX = 0;
     private rotY = 0;
     private rotZ = 0;
@@ -19,6 +23,15 @@ export class TranslatorIsometric3D {
         this.worldHeight = height;
         this.viewport_w = width;
         this.viewport_h = height;
+        this.pivotX = width / 2;
+        this.pivotY = height / 2;
+        this.pivotZ = 0;
+    }
+
+    public setPivot(x: number, y: number, z: number) {
+        this.pivotX = x;
+        this.pivotY = y; 
+        this.pivotZ = z;
     }
 
     public setViewPort(x: number, y: number, width: number, height: number) {
@@ -54,6 +67,10 @@ export class TranslatorIsometric3D {
     }
 
     public getXY(x: number, y: number, z: number) {
+        x -= this.pivotX;
+        y -= this.pivotY;
+        z -= this.pivotZ;
+
         const cosX = Math.cos(this.rotX), sinX = Math.sin(this.rotX);
         const cosY = Math.cos(this.rotY), sinY = Math.sin(this.rotY);
         const cosZ = Math.cos(this.rotZ), sinZ = Math.sin(this.rotZ);
@@ -69,7 +86,6 @@ export class TranslatorIsometric3D {
 
         let projX = x3;
         let projY = y3;
-
         let depth = z2;
 
         if (this.fov > 0) {
