@@ -87,6 +87,22 @@ export class TranslatorIsometric3D {
         return $multi(screenX + this.viewport_w / 2, screenY + this.viewport_h / 2);
     }
 
+    public getQuadXY(x: number, y: number, w: number, h: number, z = 0) {
+        const [x1, y1] = this.getXY(x, y, z)
+        const [x2, y2] = this.getXY(w, y, z)
+        const [x3, y3] = this.getXY(w, h, z)
+        const [x4, y4] = this.getXY(x, h, z)
+        return $multi(x1, y1, x2, y2, x3, y3, x4, y4)
+    }
+
+    public getAxisXY(x: number, y: number, z: number, size: number) {
+        const [ox, oy] = this.getXY(x, y, z)
+        const [xx, xy] = this.getXY(x + size, y, z)
+        const [yx, yy] = this.getXY(x, y + size, z)
+        const [zx, zy] = this.getXY(x, y, z + size)
+        return $multi(ox, oy, xx, xy, yx, yy, zx, zy)
+    }
+
     public getW(w: number) {
         return w * this.viewport_w / this.worldWidth * this.scale;
     }

@@ -51,7 +51,7 @@ function love.keypressed(key)
     elseif key == "up" then
         scale = scale + 0.10
         render:setScale(scale)
-    elseif key == "down" and scale > 0.10 then
+    elseif key == "down" and scale > 0.20 then
         scale = scale - 0.10
         render:setScale(scale)
     end
